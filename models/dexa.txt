@@ -1,0 +1,86 @@
+########## NAME
+dexa
+
+########## METADATA
+timeunit = h
+
+// based on the hypothesis B model from 10.1111/acer.12355
+
+########## MACROS
+
+########## STATES
+d/dt(TLR4) = -v1 + v2 - vbas1
+d/dt(TLR4a) = v1 - v2 + vbas1  
+d/dt(NFKBa) = v3 - v4
+d/dt(NFKBoIKB) = -v3 + v4
+d/dt(IKB) = v6 - v4 - vdeg2
+d/dt(IKBmRNA) =  v5 - vdeg1
+d/dt(DexaGR) = -voff + von
+d/dt(TNFmRNA) = v7 - vdeg3
+d/dt(TNF) = v8
+
+TLR4(0) = 1
+TLR4a(0) = 1
+NFKBa(0) = 1
+NFKBoIKB(0) = 1
+IKB(0) = 1
+IKBmRNA(0) = 1
+DexaGR(0) = 0
+TNFmRNA(0) = 1
+TNF(0) = 1
+
+########## PARAMETERS
+kbas1 = 0.3
+k5 = 1
+k1 = 0.3
+k2 = 17
+kon = 1
+koff = 1
+k4 = 1
+k3 = 74
+k8 = 0.4
+k7 = 55
+k6 = 1
+kdeg2 = 0.1
+kdeg3 = 3
+Km1 = 0.1
+kdeg1 = 1
+kB1 = 1
+dexa_exp_scale = 1.6
+
+########## VARIABLES
+vbas1 = kbas1 * TLR4
+v1 = k1 * LPS * TLR4 / (Km1 + LPS)
+v2 = k2 * TLR4a 
+voff = koff * DexaGR
+von = kon * Dexa * (1 - DexaGR)
+v4 = k4 * NFKBa * IKB
+v3 = k3 * NFKBoIKB * TLR4a
+v5 = k5 * NFKBa 
+v8 = k8 * TNFmRNA
+v7 = k7 * NFKBa / (1 + kB1*DexaGR)
+v6 = k6 * IKBmRNA
+vdeg1 = kdeg1 * IKBmRNA
+vdeg2 = kdeg2 * IKB
+vdeg3 = kdeg3 * TNFmRNA
+
+########## FUNCTIONS
+
+########## EVENTS
+gt(LPS, 0)
+le(LPS, 0)
+gt(dexa, 0)
+le(dexa, 0)
+
+########## OUTPUTS
+
+########## INPUTS
+LPS  = LPS  @ 0
+Dexa = Dexa @ 0 
+
+########## FEATURES
+
+TNF = TNF
+IKBa = IKB + NFKBoIKB
+
+TNF_dexa_exp = TNF*dexa_exp_scale 

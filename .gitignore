@@ -1,0 +1,9 @@
+.vscode
+*.png
+*.jpg
+!assets/*.png
+!assets/*.jpg
+*.mex*
+*.asv
+Pipfile
+__pycache__
