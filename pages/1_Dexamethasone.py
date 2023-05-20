@@ -8,13 +8,11 @@ from setup_model import setup_model
 import matplotlib.pyplot as plt
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from collections import defaultdict
 import math
 import copy
-# Setup the models
 
-model, model_features = setup_model('dexa')
+
 
 # Define functions needed
 
@@ -30,16 +28,19 @@ def get_sim_object(model, stim):
 
 def get_all_sim_objects(model, data):
     sims = {}
+    sim_steady_state = get_sim_object(model, {})
     for key, val in data.items():
         sims[key] = get_sim_object(model, val["input"])
-    return sims
+    return sims, sim_steady_state
 
 def simulate(sim, time = np.linspace(0, 25)):
+    sim_steady_state.ResetStatesDerivatives()
+    sim_steady_state.Simulate(timevector = [0.0, 700.0])
+    sim_steady_state.statevalues[sim.statenames.index('TNF')]=0
     sim.ResetStatesDerivatives()
-    sim.Simulate(timevector = [0.0, 700.0])
-    sim.statevalues[sim.statenames.index('TNF')]=0
+    sim.statevalues = sim_steady_state.statevalues.copy()
     sim.Simulate(timevector = time)
-    
+
     sim_results = pd.DataFrame(sim.featuredata,columns=sim.featurenames)
     sim_results.insert(0, 'Time', sim.timevector)
     return sim_results
@@ -65,13 +66,13 @@ def to_rgb(color):
     return f"rgb{tuple(color)}"
 
 def plot_agreement(sims, data):
-    figs = [go.Figure(), go.Figure(), go.Figure()]
-    titles=["A) LPS dose-response", "B) LPS time-response", "C) Dexamethasone + LPS"]
+    figs = [go.Figure(), go.Figure(), go.Figure(), go.Figure()]
+    titles=["A) LPS dose-response", "B) LPS time-response", "C) Dexamethasone + LPS", "Dexamethasone, pre-treatments + LPS"]
 
     dr = dict()
     for key, val in data.items():
         times = get_times(val)
-        sim = simulate(sims[key], np.linspace(times[0],times[-1],1000))
+        sim = simulate(sims[key], np.linspace(times[0],times[-1],10000))
 
         for observable_key in [key for key in data[key].keys() if key not in ["input", "meta"]]:
             observable = data[key][observable_key]
@@ -91,8 +92,8 @@ def plot_agreement(sims, data):
                 sim_dr[stimuli][observable_key][observable_key].append(sim[observable_key].values[-1]) 
         else:
             unit = observable.pop("unit",'a.u.')
-            figs[observable["subplot"]-1].add_trace(go.Scatter(name = observable["legend"], x=observable["time"], y=observable["mean"], error_y={"type": "data", "array":observable["SEM"]}, mode='markers', marker={"line": {"width":0}, "color":to_rgb(observable["color"])}))
-            figs[observable["subplot"]-1].add_trace(go.Scatter(name = observable["legend"]+"_sim", x=sim["Time"], y=sim[observable_key], showlegend=False, mode='lines', marker={"line": {"width":0}, "color":to_rgb(observable["color"])}))
+            figs[observable["figure"]-1].add_trace(go.Scatter(name = observable["legend"], x=observable["time"], y=observable["mean"], error_y={"type": "data", "array":observable["SEM"]}, mode='markers', marker={"line": {"width":0}, "color":to_rgb(observable["color"])}))
+            figs[observable["figure"]-1].add_trace(go.Scatter(name = observable["legend"]+"_sim", x=sim["Time"], y=sim[observable_key], showlegend=False, mode='lines', marker={"line": {"width":0}, "color":to_rgb(observable["color"])}))
 
     for stimuli in dr.keys():
         dose_unit = dr[stimuli].pop("unit", 'a.u.')
@@ -104,15 +105,18 @@ def plot_agreement(sims, data):
             figs[0].add_trace(go.Scatter(name = observable_key, x=observable["dose"], y=observable["mean"], error_y={"type": "data", "array":observable["SEM"]}, showlegend=False,  mode='markers', marker={"line": {"width":0}, "color":to_rgb(observable["color"])}))
             figs[0].add_trace(go.Scatter(name = observable_key+"_sim", x=sim_dr[stimuli][observable_key]["dose"],y=sim_dr[stimuli][observable_key][observable_key], showlegend=False, mode='lines', marker={"line": {"width":0}, "color":to_rgb(sim_dr[stimuli][observable_key]["color"])}))
             figs[0].update_xaxes(title_text=stimuli_name, type="log", minor=dict(ticks="inside", ticklen=6, showgrid=True))
-            figs[0].update_layout(title={'text': titles[0]}, yaxis_title=observable_name)
+            figs[0].update_layout(yaxis_title=observable_name, margin=dict(l=0, r=0, t=0, b=0))
 
-    for idx, fig in enumerate(figs[1:]):
-        fig.update_layout(title={'text': titles[idx]},  xaxis_title="Time (hour)", yaxis_title="TNF (pg/mg tissue)")
+    for fig in figs[1:]:
+        fig.update_layout(xaxis_title="Time (hour)", yaxis_title="TNF (pg/mg tissue)", margin=dict(l=0, r=0, t=0, b=0))
 
-    # figs[0].update_layout(title={'text': titles[idx]},  xaxis_title=observable_name, yaxis_title="TNF (pg/mg tissue)", type=)
+    return list(zip(figs, titles))
 
-    return figs, titles
 
+# Setup the models
+
+setup_model('dexa_A')
+setup_model('dexa_B')
 
 # Start the app
 
@@ -120,72 +124,47 @@ st.title("Dexamethasone dynamics")
 st.markdown("""This example is based on a publication by Nyman et al. from 2020, in which the authors modeled the effects of dexamethasone on alveolar macrophages, and how different dosing schedules affect the clinical window of the drug. 
 This small example allows you to use a mathematical model to simulate the effect of different doses and waiting times.
 
-### Abstract from the published paper
-Both initiation and suppression of inflammation are hallmarks of the immune response. If not balanced, the inflammation may cause extensive tissue damage, which is associated with common diseases, e.g., asthma and atherosclerosis. Anti-inflammatory drugs come with side effects that may be aggravated by high and fluctuating drug concentrations. To remedy this, an anti-inflammatory drug should have an appropriate pharmacokinetic half-life or better still, a sustained anti-inflammatory drug response. However, we still lack a quantitative mechanistic understanding of such sustained effects. Here, we study the anti-inflammatory response to a common glucocorticoid drug, dexamethasone. We find a sustained response 22 hours after drug removal. With hypothesis testing using mathematical modeling, we unravel the underlying mechanism—a slow release of dexamethasone from the receptor–drug complex. The developed model is in agreement with time-resolved training and testing data and is used to simulate hypothetical treatment schemes. This work opens up for a more knowledge-driven drug development to find sustained anti-inflammatory responses and fewer side effects.
+## Abstract from Nyman et al.:
+> Both initiation and suppression of inflammation are hallmarks of the immune response. If not balanced, the inflammation may cause extensive tissue damage, which is associated with common diseases, e.g., asthma and atherosclerosis. Anti-inflammatory drugs come with side effects that may be aggravated by high and fluctuating drug concentrations. To remedy this, an anti-inflammatory drug should have an appropriate pharmacokinetic half-life or better still, a sustained anti-inflammatory drug response. However, we still lack a quantitative mechanistic understanding of such sustained effects. Here, we study the anti-inflammatory response to a common glucocorticoid drug, dexamethasone. We find a sustained response 22 hours after drug removal. With hypothesis testing using mathematical modeling, we unravel the underlying mechanism—a slow release of dexamethasone from the receptor–drug complex. The developed model is in agreement with time-resolved training and testing data and is used to simulate hypothetical treatment schemes. This work opens up for a more knowledge-driven drug development to find sustained anti-inflammatory responses and fewer side effects.
+""")
 
-### The model
-Below is Figure 1 from the paper, detailing the two hypotheses tested in paper. In the paper, hypothesis A was rejected, and thus we are only using hypothesis B in in this example.
+st.markdown("""## The model
+Below is Figure 1 from the paper, detailing the two hypotheses tested in paper. In the paper, hypothesis A was rejected, and thus we are primarily using hypothesis B in in this example. But, you can choose to use hypothesis A.
 """)
      
 st.image('./assets/dexa-model.jpg')
 
-st.subheader('Recreating the model agreement to the experimental data')
-st.markdown("""We will now first recreate the model simulations and the agreement to the experimental data. First, we will recreate the model agreement to the training data from Figure 4.""")
+hypothesis_selected = st.selectbox("**Hypothesis selection: **", ["A 👎", "B 👍"], 1)
 
+model, model_features = setup_model(f'dexa_{hypothesis_selected[0]}')
 
-with open('data/dexa.json','r') as f:
-    data = json.load(f)
+st.markdown("""
+## Recreating the model agreement to the experimental data
+We will now first recreate the model simulations and the agreement to the experimental data. In the graphs, vertical bars correspond to measured experimental data, and continues lines correspond to model simulations. The data consist of both dose-responses and time-series data. 
 
+First, we will recreate the model agreement to the training data from Figure 4, and then from Figure 5. 
 
+""")
+            
+show_plots = st.checkbox('Show agreements', True)
 
+if show_plots:
+    st.markdown("""### Recreating agreements from Figure 4""")
 
-sims = get_all_sim_objects(model, data)
-(figs, titles) = plot_agreement(sims, data)
+    with open('data/dexa.json','r') as f:
+        data = json.load(f)
 
-experiment = "LPS1000"
-times = get_times(data[experiment])
-sim = simulate(sims[experiment], np.linspace(times[0]-1,times[-1],1000))
+    sims, sim_steady_state = get_all_sim_objects(model, data)
+    figs = plot_agreement(sims, data)
 
-st.line_chart(sim, x="Time", y="TNF")
+    for fig, title in figs[0:3]:
+        st.markdown(f"#### {title}")
+        st.plotly_chart(fig)
 
-for fig in figs:
+    st.markdown("""### Recreating agreements from Figure 5""")
+    fig, title = figs[3]
+    st.markdown(f"#### {title}")
     st.plotly_chart(fig)
-
-
-#Leftovers from the alcohol model
-# st.subheader("Specifying the alcoholic drinks")
-
-# n_drinks = st.slider("Number of drinks:", 1, 15, 1)
-
-# drink_times.append(st.number_input("Time of drink (h): ", 0.0, 100.0, start_time, 0.1, key=f"drink_time{i}"))
-# drink_lengths.append(st.number_input("Drink length (min): ", 0.0, 240.0, 20.0, 0.1, key=f"drink_length{i}"))
-# drink_concentrations.append(st.number_input("Concentration of drink (%): ", 0.0, 100.0, 5.0, 0.01, key=f"drink_concentrations{i}"))
-# drink_volumes.append(st.number_input("Volume of drink (L): ", 0.0, 24.0, 0.33, 0.1, key=f"drink_volumes{i}"))
-# drink_kcals.append(st.number_input("Kcal of the drink (kcal): ", 0.0, 1000.0, 250.0, 1.0, key=f"drink_kcals{i}"))
-# start_time += 1
-# st.divider()
-
-# EtOH_conc = [0]+[c*on for c in drink_concentrations for on in [1 , 0]]
-# vol_drink_per_time = [0]+[v/t*on if t>0 else 0 for v,t in zip(drink_volumes, drink_lengths) for on in [1 , 0]]
-# kcal_liquid_per_vol = [0]+[k/v*on if v>0 else 0 for v,k in zip(drink_volumes, drink_kcals) for on in [1 , 0]]
-# drink_length = [0]+[t*on for t in drink_lengths for on in [1 , 0]]
-# t = [t+(l/60)*on for t,l in zip(drink_times, drink_lengths) for on in [0,1]]
-
-# stim = {
-#     "EtOH_conc": {"t": t, "f": EtOH_conc},
-#     "vol_drink_per_time": {"t": t, "f": vol_drink_per_time},
-#     "kcal_liquid_per_vol": {"t": t, "f": kcal_liquid_per_vol},
-#     "drink_length": {"t": t, "f": drink_length},
-#     }
-
-# # Plotting the drinks
-
-# sim_results = simulate(model, anthropometrics, stim, extra_time=extra_time)
-
-# st.subheader("Plotting the time course given the alcoholic drinks specified")
-# feature = st.selectbox("Feature of the model to plot", model_features)
-# st.line_chart(sim_results, x="Time", y=feature)
-
 
 biblioghraphy(["nyman_2020"])
 

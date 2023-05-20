@@ -10,8 +10,8 @@
       "mean": 57.420935,
       "SEM": 22.5569316467967,
       "unit": "pg/mg tissue",
-      "color": [75,75,75],
-      "subplot": 1
+      "color": [125,125,125],
+      "figure": 1
     }
   },
   "dr_LPS_50": {
@@ -25,8 +25,8 @@
       "mean": 139.4169,
       "SEM": 25.933826792252937,
       "unit": "pg/mg tissue",
-      "color": [75,75,75],
-      "subplot": 1
+      "color": [125,125,125],
+      "figure": 1
     }
   },
   "dr_LPS_100": {
@@ -40,8 +40,8 @@
       "mean": 288.8007,
       "SEM": 36.4897397824169,
       "unit": "pg/mg tissue",
-      "color": [75,75,75],
-      "subplot": 1
+      "color": [125,125,125],
+      "figure": 1
     }
   },
   "dr_LPS_250": {
@@ -55,8 +55,8 @@
       "mean": 425.51125,
       "SEM": 54.010632762202469,
       "unit": "pg/mg tissue",
-      "color": [75,75,75],
-      "subplot": 1
+      "color": [125,125,125],
+      "figure": 1
     }
   },
   "dr_LPS_500": {
@@ -70,8 +70,8 @@
       "mean": 462.02835,
       "SEM": 22.5569316467967,
       "unit": "pg/mg tissue",
-      "color": [75,75,75],
-      "subplot": 1
+      "color": [125,125,125],
+      "figure": 1
     }
   },
   "dr_LPS_1000": {
@@ -85,8 +85,8 @@
       "mean": 487.6485,
       "SEM": 22.5569316467967,
       "unit": "pg/mg tissue",
-      "color": [75,75,75],
-      "subplot": 1
+      "color": [125,125,125],
+      "figure": 1
     }
   },
   "LPS1000": {
@@ -105,7 +105,7 @@
         0, 23.858023705305449, 23.858023705305449, 23.858023705305449,
         23.858023705305449, 75.811555463993045
       ],
-      "subplot": 2,
+      "figure": 2,
       "unit": "pg/mg tissue",
       "color": [240,228,66],
       "legend": "1000 ng/ml"
@@ -127,7 +127,7 @@
         0, 22.623728424153285, 22.623728424153285, 22.623728424153285,
         22.623728424153285, 85.873457117325813
       ],
-      "subplot": 2,
+      "figure": 2,
       "unit": "pg/mg tissue",
       "color": [230,159,0],
       "legend": "100 ng/ml"
@@ -149,9 +149,9 @@
         0, 8.12288643131267, 8.12288643131267, 8.12288643131267,
         8.12288643131267, 8.12288643131267
       ],
-      "subplot": 2,
+      "figure": 2,
       "unit": "pg/mg tissue",
-      "color": [75,75,75],
+      "color": [125,125,125],
       "legend": "control (no LPS)"
     }
   },
@@ -168,7 +168,7 @@
         0, 0, 21.62154883997599, 21.62154883997599, 21.62154883997599,
         21.62154883997599
       ],
-      "subplot": 3,
+      "figure": 3,
       "unit": "pg/mg tissue",
       "color": [230,159,0],
       "legend": "Control (only LPS)"
@@ -184,7 +184,7 @@
       "time": [0, 1, 2, 4, 6, 24],
       "mean": [0, 0, 0, 40.20361, 145.459, 319.0633],
       "SEM": [0, 0, 0, 44.22506538157927, 44.22506538157927, 44.22506538157927],
-      "subplot": 3,
+      "figure": 3,
       "unit": "pg/mg tissue",
       "color": [204,121,167],
       "legend": "0.3 µM (removed)"
@@ -202,7 +202,7 @@
       "SEM": [
         0, 0, 0, 6.3157842100481458, 6.3157842100481458, 6.3157842100481458
       ],
-      "subplot": 3,
+      "figure": 3,
       "unit": "pg/mg tissue",
       "color": [86,180,233],
       "legend": "3 µM (removed)"
@@ -220,7 +220,7 @@
       "SEM": [
         0, 0, 0, 5.1215103889059153, 5.1215103889059153, 5.1215103889059153
       ],
-      "subplot": 3,
+      "figure": 3,
       "unit": "pg/mg tissue",
       "color": [213,94,0],
       "legend": "0.3 µM"
@@ -238,10 +238,83 @@
       "SEM": [
         0, 0, 0, 2.9434599502560381, 2.9434599502560381, 2.9434599502560381
       ],
-      "subplot": 3,
+      "figure": 3,
       "unit": "pg/mg tissue",
       "color": [0,114,178],
       "legend": "0.3 µM"
+    }
+  },
+  "dexa_control_2": {
+    "input": {
+      "LPS": { "t": [-Infinity, 0], "f": [0, 100], "unit": "ng/ml" },
+      "Dexa": { "t": [-Infinity], "f": [0], "unit": "µM" },
+      "wash": { "t": [-Infinity, 0], "f": [0, 1] }
+    },
+    "TNF_dexa_exp": {
+      "time": [0, 1, 2, 4, 6, 24],
+      "mean": [0, 0, 5.732439, 60.291255, 183.61695, 468.1097],
+      "SEM": [
+        0, 0, 21.62154883997599, 21.62154883997599, 21.62154883997599,
+        21.62154883997599
+      ],
+      "figure": 4,
+      "unit": "pg/mg tissue",
+      "color": [230,159,0],
+      "legend": "Control (only LPS)"
+    }
+  },
+  "high_dexa_pre_0hwash_LPS": {
+    "input": {
+      "LPS": { "t": [-Infinity, 0], "f": [0, 100], "unit": "ng/ml" },
+      "Dexa": { "t": [-Infinity, -1, 0], "f": [0, 3, 0], "unit": "µM" },
+      "wash": { "t": [-Infinity, 0], "f": [0, 1] }
+    },
+    "TNF_dexa_exp": {
+      "time": [0, 1, 2, 4, 6],
+      "mean": [0, 0, 4.0572, 22.9574, 43.8868],
+      "SEM": [
+        0, 0, 10.0260, 10.0260, 10.0260
+      ],
+      "figure": 4,
+      "unit": "pg/mg tissue",
+      "color": [86,180,233],
+      "legend": "dexa removed before LPS"
+    }
+  },
+  "high_dexa_pre_16hwash_LPS": {
+    "input": {
+      "LPS": { "t": [-Infinity, 16], "f": [0, 100], "unit": "ng/ml" },
+      "Dexa": { "t": [-Infinity, -1, 0], "f": [0, 3, 0], "unit": "µM" },
+      "wash": { "t": [-Infinity, 0], "f": [0, 1] }
+    },
+    "TNF_dexa_exp": {
+      "time": [16, 17, 18, 20, 22],
+      "mean": [0, 0, 9.9883, 61.0065, 96.3590],
+      "SEM": [
+        0, 0, 16.7288, 16.7288, 16.7288
+      ],
+      "figure": 4,
+      "unit": "pg/mg tissue",
+      "color": [0,158,115],
+      "legend": "16 h wash before LPS"
+    }
+  },   
+  "high_dexa_pre_22hwash_LPS": {
+    "input": {
+      "LPS": { "t": [-Infinity, 22], "f": [0, 100], "unit": "ng/ml" },
+      "Dexa": { "t": [-Infinity, -1, 0], "f": [0, 3, 0], "unit": "µM" },
+      "wash": { "t": [-Infinity, 0], "f": [0, 1] }
+    },
+    "TNF_dexa_exp": {
+      "time": [22, 23, 24, 26, 28],
+      "mean": [0, 0, 9.4944, 58.7045, 80.6056],
+      "SEM": [
+        0, 0, 7.7875, 7.7875, 7.7875
+      ],
+      "figure": 4,
+      "unit": "pg/mg tissue",
+      "color": [80,0,0],
+      "legend": "22 h wash before LPS"
     }
   }
 }
