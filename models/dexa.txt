@@ -71,6 +71,7 @@ gt(LPS, 0)
 le(LPS, 0)
 gt(dexa, 0)
 le(dexa, 0)
+gt(wash,0), TNF, 0
 
 ########## OUTPUTS
 
@@ -84,3 +85,4 @@ TNF = TNF
 IKBa = IKB + NFKBoIKB
 
 TNF_dexa_exp = TNF*dexa_exp_scale 
+LPS = LPS

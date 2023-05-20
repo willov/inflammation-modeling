@@ -10,7 +10,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from collections import defaultdict
-
+import math
+import copy
 # Setup the models
 
 model, model_features = setup_model('dexa')
@@ -33,48 +34,82 @@ def get_all_sim_objects(model, data):
         sims[key] = get_sim_object(model, val["input"])
     return sims
 
-def simulate(model, stim, extra_time = 10):
-    sim = get_sim_object(model, stim)
+def simulate(sim, time = np.linspace(0, 25)):
     sim.ResetStatesDerivatives()
-    sim.Simulate(timevector = [0.0, 750.0])
-    sim.statevalues[sim.states.index('TNF')]=0
-    sim.Simulate(timevector = np.linspace(0, 1000))
+    sim.Simulate(timevector = [0.0, 700.0])
+    sim.statevalues[sim.statenames.index('TNF')]=0
+    sim.Simulate(timevector = time)
     
     sim_results = pd.DataFrame(sim.featuredata,columns=sim.featurenames)
     sim_results.insert(0, 'Time', sim.timevector)
     return sim_results
+
+def get_times(data):
+    t = []
+    for k, var in data.items():
+        if k not in ["input", "meta", "extra"]:
+            if not isinstance(var["time"], list):
+                t.append(var["time"])
+            else:
+                t+=var["time"]
+    for k, stim in data["input"].items():
+        if not isinstance(stim["t"], list):
+            t.append(stim["t"])
+        else:
+            t+=stim["t"]
+    t = [t for t in t if t > -math.inf]
+    t = sorted(set(t))
+    return t
+
+def to_rgb(color):
+    return f"rgb{tuple(color)}"
 
 def plot_agreement(sims, data):
     figs = [go.Figure(), go.Figure(), go.Figure()]
     titles=["A) LPS dose-response", "B) LPS time-response", "C) Dexamethasone + LPS"]
 
     dr = dict()
-    for key in data.keys():
+    for key, val in data.items():
+        times = get_times(val)
+        sim = simulate(sims[key], np.linspace(times[0],times[-1],1000))
+
         for observable_key in [key for key in data[key].keys() if key not in ["input", "meta"]]:
             observable = data[key][observable_key]
-            # ax.errorbar(data_unit["time"], data_unit["mean"], data_unit["SEM"], capsize=12)
 
         if 'dr_' in key:
             stimuli, dose = key.split('_')[1:]
             if stimuli not in dr.keys():
-                print(stimuli)
-                dr[stimuli] =dict()
-                dr[stimuli][observable_key] = {"dose": [dose], "mean": [observable["mean"]], "SEM": [observable["SEM"]]}
+                dr[stimuli] =dict(unit = data[key]["input"][stimuli]["unit"])
+                sim_dr = copy.deepcopy(dr)
+                dr[stimuli][observable_key] = {"dose": [dose], "mean": [observable["mean"]], "SEM": [observable["SEM"]], "unit": observable["unit"], "color":observable["color"]}
+                sim_dr[stimuli][observable_key] = {"dose": [sim[stimuli].values[-1]], observable_key: [sim[observable_key].values[-1]], "unit": observable["unit"], "color":observable["color"]}
             else:
                 dr[stimuli][observable_key]["dose"].append(dose) 
                 dr[stimuli][observable_key]["mean"].append(observable["mean"]) 
                 dr[stimuli][observable_key]["SEM"].append(observable["SEM"]) 
-
+                sim_dr[stimuli][observable_key]["dose"].append(sim[stimuli].values[-1]) 
+                sim_dr[stimuli][observable_key][observable_key].append(sim[observable_key].values[-1]) 
         else:
-            figs[observable["subplot"]-1].add_trace(go.Scatter(name = observable["legend"], x=observable["time"], y=observable["mean"], error_y={"type": "data", "array":observable["SEM"]}, mode='markers', marker={"line": {"width":0}}))
+            unit = observable.pop("unit",'a.u.')
+            figs[observable["subplot"]-1].add_trace(go.Scatter(name = observable["legend"], x=observable["time"], y=observable["mean"], error_y={"type": "data", "array":observable["SEM"]}, mode='markers', marker={"line": {"width":0}, "color":to_rgb(observable["color"])}))
+            figs[observable["subplot"]-1].add_trace(go.Scatter(name = observable["legend"]+"_sim", x=sim["Time"], y=sim[observable_key], showlegend=False, mode='lines', marker={"line": {"width":0}, "color":to_rgb(observable["color"])}))
 
-    for key in dr.keys():
-        for observable_key in dr[key].keys():
-            observable = dr[key][observable_key]
-            figs[0].add_trace(go.Scatter(name = key, x=observable["dose"], y=observable["mean"], error_y={"type": "data", "array":observable["SEM"]}, showlegend=True, mode='markers', marker={"line": {"width":0}}))
-        figs[0].update_xaxes(type="log")
-    for idx, fig in enumerate(figs):
-        fig.update_layout(title={'text': titles[idx]})
+    for stimuli in dr.keys():
+        dose_unit = dr[stimuli].pop("unit", 'a.u.')
+        stimuli_name = f"{stimuli} ({dose_unit})"
+        for observable_key in dr[stimuli].keys():
+            observable = dr[stimuli][observable_key]
+            unit = observable.pop("unit",'a.u.')
+            observable_name = f"{observable_key} ({unit})"
+            figs[0].add_trace(go.Scatter(name = observable_key, x=observable["dose"], y=observable["mean"], error_y={"type": "data", "array":observable["SEM"]}, showlegend=False,  mode='markers', marker={"line": {"width":0}, "color":to_rgb(observable["color"])}))
+            figs[0].add_trace(go.Scatter(name = observable_key+"_sim", x=sim_dr[stimuli][observable_key]["dose"],y=sim_dr[stimuli][observable_key][observable_key], showlegend=False, mode='lines', marker={"line": {"width":0}, "color":to_rgb(sim_dr[stimuli][observable_key]["color"])}))
+            figs[0].update_xaxes(title_text=stimuli_name, type="log", minor=dict(ticks="inside", ticklen=6, showgrid=True))
+            figs[0].update_layout(title={'text': titles[0]}, yaxis_title=observable_name)
+
+    for idx, fig in enumerate(figs[1:]):
+        fig.update_layout(title={'text': titles[idx]},  xaxis_title="Time (hour)", yaxis_title="TNF (pg/mg tissue)")
+
+    # figs[0].update_layout(title={'text': titles[idx]},  xaxis_title=observable_name, yaxis_title="TNF (pg/mg tissue)", type=)
 
     return figs, titles
 
@@ -101,8 +136,17 @@ st.markdown("""We will now first recreate the model simulations and the agreemen
 with open('data/dexa.json','r') as f:
     data = json.load(f)
 
+
+
+
 sims = get_all_sim_objects(model, data)
 (figs, titles) = plot_agreement(sims, data)
+
+experiment = "LPS1000"
+times = get_times(data[experiment])
+sim = simulate(sims[experiment], np.linspace(times[0]-1,times[-1],1000))
+
+st.line_chart(sim, x="Time", y="TNF")
 
 for fig in figs:
     st.plotly_chart(fig)
