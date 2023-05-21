@@ -1,5 +1,5 @@
 ########## NAME
-dexa_B
+dexa_treatment
 
 ########## METADATA
 timeunit = h
@@ -17,7 +17,9 @@ d/dt(IKB) = v6 - v4 - vdeg2
 d/dt(IKBmRNA) =  v5 - vdeg1
 d/dt(DexaGR) = -voff + von
 d/dt(TNFmRNA) = v7 - vdeg3
-d/dt(TNF) = v8
+d/dt(TNF) = v8 - 5.65 * TNF 
+
+d/dt(Dexa_time) = 1
 
 TLR4(0) = 1
 TLR4a(0) = 1
@@ -28,6 +30,8 @@ IKBmRNA(0) = 1
 DexaGR(0) = 0
 TNFmRNA(0) = 1
 TNF(0) = 1
+
+Dexa_time(0) = 0
 
 ########## PARAMETERS
 kbas1 = 0.3
@@ -43,18 +47,21 @@ k7 = 55
 k6 = 1
 kdeg2 = 0.1
 kdeg3 = 3
-Km1 = 0.1
+Km = 0.1
 kdeg1 = 1
 kB1 = 1
+dexa_exp_scale = 1
 
-dexa_exp_scale = 1.8
+Dexa = 0 //Not a parameter, only used for event
 
 ########## VARIABLES
+Dexa_dynamic = Dexa*(1/2)^(Dexa_time/4.0)
+
 vbas1 = kbas1 * TLR4
-v1 = k1 * LPS * TLR4 / (Km1 + LPS)
+v1 = k1 * LPS * TLR4 / (Km + LPS)
 v2 = k2 * TLR4a 
 voff = koff * DexaGR
-von = kon * Dexa * (1 - DexaGR)
+von = kon * Dexa_dynamic * (1 - DexaGR)
 v4 = k4 * NFKBa * IKB
 v3 = k3 * NFKBoIKB * TLR4a
 v5 = k5 * NFKBa 
@@ -64,14 +71,13 @@ v6 = k6 * IKBmRNA
 vdeg1 = kdeg1 * IKBmRNA
 vdeg2 = kdeg2 * IKB
 vdeg3 = kdeg3 * TNFmRNA
-
 ########## FUNCTIONS
 
 ########## EVENTS
 e1 = gt(LPS, 0)
 e2 = le(LPS, 0)
-e3 = ge(Dexa, 1)
-e4 = lt(Dexa, 1)
+e3 = gt(Dexa_in, 0), Dexa, Dexa_dynamic+Dexa_in, Dexa_time, 0
+e4 = le(Dexa_in, 0)
 e5 = gt(wash,0), TNF, 0
 e6 = le(wash,0)
 
@@ -79,7 +85,7 @@ e6 = le(wash,0)
 
 ########## INPUTS
 LPS  = LPS  @ 0
-Dexa = Dexa @ 0 
+Dexa_in = Dexa @ 0 
 wash = wash @ 0
 
 ########## FEATURES
@@ -89,4 +95,7 @@ IKBa = IKB + NFKBoIKB
 TNF_dexa_exp = TNF*dexa_exp_scale 
 
 LPS = LPS
-Dexa = Dexa
+Dexa_stimulation = Dexa_in
+
+Dexa-GR = DexaGR
+Dexa = Dexa_dynamic

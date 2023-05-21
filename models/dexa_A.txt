@@ -70,17 +70,19 @@ vdeg2 = kdeg2 * IKB
 ########## FUNCTIONS
 
 ########## EVENTS
-gt(LPS, 0)
-le(LPS, 0)
-gt(dexa, 0)
-le(dexa, 0)
-gt(wash,0), TNF, 0
+e1 = gt(LPS, 0)
+e2 = le(LPS, 0)
+e3 = ge(Dexa, 1)
+e4 = lt(Dexa, 1)
+e5 = gt(wash,0), TNF, 0
+e6 = le(wash,0)
 
 ########## OUTPUTS
 
 ########## INPUTS
 LPS  = LPS  @ 0
 Dexa = Dexa @ 0 
+wash = wash @ 0
 
 ########## FEATURES
 
@@ -89,3 +91,4 @@ IKBa = IKB + NFKBoIKB
 
 TNF_dexa_exp = TNF*dexa_exp_scale 
 LPS = LPS
+Dexa = Dexa
