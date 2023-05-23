@@ -1,0 +1,244 @@
+########## NAME
+fever
+
+########## METADATA
+timeunit = h
+
+// based on the model from 10.1128/CDLI.12.1.60-67.2005
+
+########## MACROS
+
+########## STATES
+//------------------------Inflammatory Model ----------------------------
+d/dt(tnf  ) = ktnfm*ma*xtnf10^htnf10/(IL10^htnf10 + xtnf10^htnf10)*xtnf6^htnf6/(IL6^htnf6 + xtnf6^htnf6) - ktnf*(tnf - stnf)
+d/dt(IL10 ) = ma*(k10m + k106*IL6^h106/(IL6^h106 + x106^h106)) - k10*(IL10 - s10)
+d/dt(IL8) = ma*(k8m + k8tnf*tnf^h8tnf/(tnf^h8tnf + x8tnf^h8tnf))*x810^h810/(IL10^h810 + x810^h810) - k8*(IL8 - s8)
+d/dt(IL6  ) = ma*(k6m + k6tnf*tnf^h6tnf/(tnf^h6tnf + x6tnf^h6tnf))*x66^h66/(IL6^h66 + x66^h66)*x610^h610/(IL10^h610 + x610^h610) - k6*(IL6 - s6)
+d/dt(ma   ) = v2 - kma*ma   
+d/dt(mr   ) = v1 - v2
+d/dt(pe   ) = -kpe*pe
+
+//----------------------------Temperature RHS-------------------------------
+d/dt(temp2) = ((-temp2 + F)/tau1)
+
+//---------------------------Pain Perception RHS----------------------------
+d/dt(pp   ) = vpain 
+
+//----------------------------Cardio Model  RHS-----------------------------
+d/dt(Vla) = Q - qa
+d/dt(Vsa) = qa - qs
+d/dt(Vlv) = qv - Q
+d/dt(Vsv) = qs - qv
+
+//-----------------------------Heart Rate RHS-------------------------------
+d/dt(hr) = (-hr + ft)/tau2
+
+//----------------------------Nitric Oxide RHS------------------------------
+d/dt(no) = knom*ma*0.26 - kno*no  //knom*ma*vlag1*vlag2
+
+//-----------------------------Resistance RHS-------------------------------
+d/dt(rs) = krpp*(vpain^hrpp/(vpain^hrpp + xrpp^hrpp)) - krno*no - kr*(rs - Rs)
+
+//------------------------Inflammatory Model ----------------------------
+tnf(0) = 0
+IL10 (0) = 0
+IL8(0) = 0
+IL6(0) = 0
+ma(0) = 0
+mr(0) = 0
+pe(0) = 0
+
+//----------------------------Temperature RHS-------------------------------
+temp2(0) = 0
+
+//---------------------------Pain Perception RHS----------------------------
+pp(0) = 0
+
+//----------------------------Cardio Model  RHS-----------------------------
+Vla(0) = 0
+Vsa(0) = 0
+Vlv(0) = 0
+Vsv(0) = 0
+
+//-----------------------------Heart Rate RHS-------------------------------
+hr(0) = 0
+//----------------------------Nitric Oxide RHS------------------------------
+no(0) = 0
+//-----------------------------Resistance RHS-------------------------------
+rs(0) = 0
+
+
+########## PARAMETERS
+//------------------------Inflammatory ----------------------------
+k10    = 1
+k10m   = 1
+k6     = 1
+k6m    = 1
+k8     = 1
+k8m    = 1
+ktnf   = 1
+ktnfm  = 1
+kma    = 1
+kmpe   = 1
+kmr    = 1
+kpe    = 1
+x610   = 1
+x66    = 1
+x6tnf  = 1
+x810   = 1
+x8tnf  = 1
+x106   = 1
+xtnf10 = 1
+xtnf6  = 1
+xmpe   = 1
+xm10   = 1
+xmtnf  = 1
+h106   = 1
+h6tnf  = 1
+h66    = 1
+h610   = 1
+h8tnf  = 1
+h810   = 1
+htnf10 = 1
+htnf6  = 1
+hm10   = 1
+hmtnf  = 1
+hmpe   = 1
+stnf   = 1
+s10    = 1
+s8     = 1
+s6     = 1
+sm     = 1
+mmax   = 1
+k6tnf  = 1
+k8tnf  = 1 
+k106   = 1
+kmtnf  = 1
+
+//----------------------------Temperature-------------------------------
+tau1  =  1 
+TM    =  1 
+Tm    =  1 
+kt    =  1
+kttnf =  1 
+kt6   =  1 
+kt10  =  1 
+xttnf =  1 
+xt6   =  1 
+xt10  =  1 
+httnf =  1 
+ht6   =  1     
+ht10  =  1
+
+//-----------------------------Heart Rate RHS-------------------------------
+tau2  = 1
+HM    = 1
+Hm    = 1
+kh    = 1
+xht   = 1
+hht   = 1
+
+//---------------------------Pain Perception RHS----------------------------
+ppM   = 1 
+kpepp = 1 
+kpp   = 1
+
+//----------------------------Cardio Model  RHS-----------------------------
+Ra  = 1
+Rv  = 1
+Rs  = 1
+Cla = 1
+Csa = 1
+Clv = 1
+Csv = 1
+Em  = 1
+EM  = 1
+
+//----------------------------Nitric Oxide RHS------------------------------
+knom  = 1 
+kno   = 1  
+xntnf = 1 
+xn10  = 1  
+hntnf = 1 
+hn10  = 1
+
+//-----------------------------Resistance RHS-------------------------------
+krpp  = 1
+krno  = 1
+kr    = 1
+xrpp  = 1
+hrpp  = 1
+
+//-----------------------------Heart Rate extra-------------------------------
+xhp   = 1
+hhp   = 1
+
+var_xhp = 1
+
+########## VARIABLES
+ylag1 = 1
+ylag2 = 0.248
+BPo = 121.9720
+
+//----------------------------Cardio Model  RHS-----------------------------
+// Calculate pressures (stressed volume only!)
+pla  = Vla/Cla
+psa  = Vsa/Csa
+plv  = Vlv/Clv
+psv  = Vsv/Csv
+
+//Calculate flows
+qa = (pla - psa)/Ra
+qs = (psa - psv)/rs
+qv = (psv - plv)/Rv
+
+Vstr = -(pla/EM - plv/Em) 
+Q    = Vstr*hr/60
+
+// MODEL REACTIONS 
+
+v1 = kmr*mr*(1-(mr/mmax)) 
+v2 = (pe^hmpe/(pe^hmpe + xmpe^hmpe))*(sm + kmtnf*(tnf^hmtnf/(tnf^hmtnf + xmtnf^hmtnf))*(xmtnf)^hmtnf)*(xm10^hm10/(IL10^hm10 + xm10^hm10))*mr
+
+vlag1 = ylag1^hntnf/(ylag1^hntnf + xntnf^hntnf)
+vlag2 = xn10^hn10/(ylag2^hn10 + xn10^hn10)
+
+vpain = -kpepp*pe*pp + kpp*(ppM-pp);
+
+//F  = kt*(TM-Tm)*((kttnf*(abs(tnf - stnf))^httnf/((abs(tnf-stnf))^httnf + xttnf^httnf) + kt6*(abs(IL6 - s6))^ht6/((abs(IL6 - s6))^ht6 + xt6^ht6) - kt10*(1-xt10^ht10/((abs(IL10-s10))^ht10 + xt10^ht10) + Tm
+vhill1 = (abs(tnf-stnf))^httnf/((abs(tnf-stnf))^httnf + xttnf^httnf)
+vhill2 = (abs(IL6 - s6))^ht6/((abs(IL6 - s6))^ht6 + xt6^ht6)
+vhill3 = xt10^ht10/((abs(IL10-s10))^ht10 + xt10^ht10)
+F      = kt*(TM-Tm)*((kttnf*vhill1 + kt6*vhill2) - kt10*(1-vhill3)) + Tm
+
+ft = kh*(HM - Hm)*((((abs(temp2 - Tm))^hht/((abs(temp2 - Tm))^hht + (abs(xht - Tm))^hht)))^1)*((((abs(xhp - BPo))^hhp/((abs((Vla/Cla) - BPo))^hhp + (abs(var_xhp - BPo))^hhp)))^1) + Hm
+
+########## FUNCTIONS
+
+########## EVENTS
+e1 = gt(LPS, 0), pe, LPS
+e2 = le(LPS, 0)
+e_ft_gt = gt(Vla/Cla, 100), var_xhp, xhp 
+e_ft_lt = le(Vla/Cla, 100), var_xhp, Vla/Cla
+
+########## OUTPUTS
+
+########## INPUTS
+LPS  = LPS  @ 0
+
+########## FEATURES
+
+BP = Vla/Cla
+HR = hr
+TNF = tnf
+
+IL8 = IL8
+IL6 = IL6
+IL10 = IL10
+
+TEMP = temp2
+
+PPT = pp
+
+LPS = LPS
+
