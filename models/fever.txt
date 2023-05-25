@@ -16,7 +16,7 @@ d/dt(IL8) = ma*(k8m + k8tnf*tnf^h8tnf/(tnf^h8tnf + x8tnf^h8tnf))*x810^h810/(IL10
 d/dt(IL6  ) = ma*(k6m + k6tnf*tnf^h6tnf/(tnf^h6tnf + x6tnf^h6tnf))*x66^h66/(IL6^h66 + x66^h66)*x610^h610/(IL10^h610 + x610^h610) - k6*(IL6 - s6)
 d/dt(ma   ) = v2 - kma*ma   
 d/dt(mr   ) = v1 - v2
-d/dt(pe   ) = -kpe*pe
+d/dt(pe   ) = -kpe*pe * (1-sustained_LPS) * (1+LPS_adsorption)
 
 //----------------------------Temperature RHS-------------------------------
 d/dt(temp2) = ((-temp2 + F)/tau1)
@@ -37,7 +37,7 @@ d/dt(hr) = (-hr + ft)/tau2
 d/dt(no) = knom*ma*0.26 - kno*no  //knom*ma*vlag1*vlag2
 
 //-----------------------------Resistance RHS-------------------------------
-d/dt(rs) = krpp*(vpain^hrpp/(vpain^hrpp + xrpp^hrpp)) - krno*no - kr*(rs - Rs)
+d/dt(rs) = krpp*(vpain^hrpp/(vpain^hrpp + xrpp^hrpp)) - krno*no - kr*(rs - Rs)*(1+vasopressor)
 
 //------------------------Inflammatory Model ----------------------------
 tnf(0) = 0
@@ -203,21 +203,25 @@ v2 = (pe^hmpe/(pe^hmpe + xmpe^hmpe))*(sm + kmtnf*(tnf^hmtnf/(tnf^hmtnf + xmtnf^h
 vlag1 = ylag1^hntnf/(ylag1^hntnf + xntnf^hntnf)
 vlag2 = xn10^hn10/(ylag2^hn10 + xn10^hn10)
 
-vpain = -kpepp*pe*pp + kpp*(ppM-pp);
+vpain = -(1-0.9*antipyretic)*kpepp*pe*pp + kpp*(ppM-pp);
 
-//F  = kt*(TM-Tm)*((kttnf*(abs(tnf - stnf))^httnf/((abs(tnf-stnf))^httnf + xttnf^httnf) + kt6*(abs(IL6 - s6))^ht6/((abs(IL6 - s6))^ht6 + xt6^ht6) - kt10*(1-xt10^ht10/((abs(IL10-s10))^ht10 + xt10^ht10) + Tm
+//F  = kt*(TM-Tm)*(((1-0.9*antipyretic)*kttnf*(abs(tnf - stnf))^httnf/((abs(tnf-stnf))^httnf + xttnf^httnf) + (1-0.9*antipyretic)*kt6*(abs(IL6 - s6))^ht6/((abs(IL6 - s6))^ht6 + xt6^ht6) - kt10*(1-xt10^ht10/((abs(IL10-s10))^ht10 + xt10^ht10) + Tm
 vhill1 = (abs(tnf-stnf))^httnf/((abs(tnf-stnf))^httnf + xttnf^httnf)
 vhill2 = (abs(IL6 - s6))^ht6/((abs(IL6 - s6))^ht6 + xt6^ht6)
 vhill3 = xt10^ht10/((abs(IL10-s10))^ht10 + xt10^ht10)
-F      = kt*(TM-Tm)*((kttnf*vhill1 + kt6*vhill2) - kt10*(1-vhill3)) + Tm
+F      = kt*(TM-Tm)*(((1-0.9*antipyretic)*kttnf*vhill1 + (1-0.9*antipyretic)*kt6*vhill2) - kt10*(1-vhill3)) + Tm
 
 ft = kh*(HM - Hm)*((((abs(temp2 - Tm))^hht/((abs(temp2 - Tm))^hht + (abs(xht - Tm))^hht)))^1)*((((abs(xhp - BPo))^hhp/((abs((Vla/Cla) - BPo))^hhp + (abs(var_xhp - BPo))^hhp)))^1) + Hm
 
 ########## FUNCTIONS
 
 ########## EVENTS
-e1 = gt(LPS, 0), pe, LPS
-e2 = le(LPS, 0)
+eLPS_on = gt(LPS, 0), pe, LPS
+eSustained_on = gt(sustained_LPS, 0)
+eSustained_off = le(sustained_LPS, 0)
+eSustained_on = gt(vasopressor, 0)
+eSustained_off = le(vasopressor, 0)
+eLPS_off = le(LPS, 0)
 e_ft_gt = gt(Vla/Cla, 100), var_xhp, xhp 
 e_ft_lt = le(Vla/Cla, 100), var_xhp, Vla/Cla
 
@@ -225,20 +229,29 @@ e_ft_lt = le(Vla/Cla, 100), var_xhp, Vla/Cla
 
 ########## INPUTS
 LPS  = LPS  @ 0
+sustained_LPS = sustained_LPS @ 0
+LPS_adsorption = LPS_adsorption @ 0
+antipyretic = antipyretic @ 0 // The effect when antipyretic is on, sets ktff = 0.1*ktnf, and kt6 = 0.1*kt6, kpepp = 0.1*kpepp
+vasopressor = vasopressor @ 0
 
 ########## FEATURES
+Endotoxin = pe
+Active monocytes = ma
 
-BP = Vla/Cla
-HR = hr
 TNF = tnf
-
-IL8 = IL8
 IL6 = IL6
+IL8 = IL8
 IL10 = IL10
 
 TEMP = temp2
 
 PPT = pp
 
-LPS = LPS
+Nitric oxide = no
+Rs = rs
+
+BP = Vla/Cla
+HR = hr
+
+//LPS = LPS
 

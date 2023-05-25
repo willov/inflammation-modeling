@@ -7,6 +7,7 @@ from references import references as ref, bibliography
 from setup_model import setup_model
 import matplotlib.pyplot as plt
 import plotly.express as px
+from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 from collections import defaultdict
 import math
@@ -15,6 +16,10 @@ import copy
 
 
 # Define functions needed
+def get_row_col(n, n_cols = 3):
+    row = int(np.ceil(n/n_cols))
+    col = int(n-n_cols*(row-1))
+    return row, col
 
 def get_sim_object(model, stim):
     act = sund.Activity(timeunit = 'h')
@@ -54,7 +59,7 @@ def get_times(data):
     for k, stim in data["input"].items():
         if not isinstance(stim["t"], list):
             t_input.append(stim["t"])
-        else:
+        else:   
             t_input+=stim["t"]
     t_input.sort()
 
@@ -71,18 +76,45 @@ def plot_agreement(sim, data):
     figs = dict()
     times,_,_ = get_times(data)
     sim_res = simulate(sim, np.linspace(times[0],times[-1],10000))
-
-    for observable_key in [key for key in data.keys() if key not in ["input", "meta"]]:
-        figs[observable_key] = go.Figure()
-        observable = data[observable_key]
+    measured_observables = [key for key in data.keys() if key not in ["input", "meta"]]
+    n_cols = 2
+    n_rows = int(np.ceil(len(measured_observables)/n_cols))
+    fig = make_subplots(rows=n_rows, cols=n_cols, row_heights=[0.5]*n_rows, column_widths=[0.5]*n_cols, horizontal_spacing=.125)
+    for n, observable_key in enumerate(measured_observables):
+        observable = data[observable_key].copy()
         unit = observable.pop("unit",'a.u.')
 
-        obs_res = sim_res[sim_res["Time"]<observable["Time"][-1]]
-        figs[observable_key].add_trace(go.Scatter(name = observable_key, x=observable["Time"], y=observable["Mean"], error_y={"type": "data", "array":observable["SEM"]}, mode='markers', marker={"line": {"width":0}}))
-        figs[observable_key].add_trace(go.Scatter(name = observable_key+"_sim", x=obs_res["Time"], y=obs_res[observable_key], showlegend=False, mode='lines', marker={"line": {"width":0}}))
-        figs[observable_key].update_layout(xaxis_title="Time (hour)", yaxis_title=f"{observable_key} ({unit})", margin=dict(l=0, r=0, t=0, b=0))
+        obs_res = sim_res[sim_res["Time"]<observable["Time"][-1]]  
+        row, col = get_row_col(n+1, n_cols=n_cols)
+        fig.add_trace(go.Scatter(name = observable_key, x=observable["Time"], y=observable["Mean"], error_y={"type": "data", "array":observable["SEM"]}, line_color="#1f77b4", showlegend=False, mode='markers', marker={"line": {"width":0}}), row=row, col=col)
+        fig.add_trace(go.Scatter(name = observable_key+" (sim)", x=obs_res["Time"], y=obs_res[observable_key], line_color="#1f77b4", showlegend=False, mode='lines', marker={"line": {"width":0}}), row=row, col=col)
+        fig.update_xaxes(title_text="Time (hour)", row=row, col=col)
+        fig.update_yaxes(title_text=f"{observable_key} ({unit})", row=row, col=col)
+    
+    fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=250*n_rows)
 
-    return figs
+    return fig
+
+def plot_intervention(sim_res, data):
+    measured_observables = [key for key in sim_res.keys() if key != "Time"]
+    n_cols = 3
+    n_rows = int(np.ceil(len(measured_observables)/n_cols))
+    fig = make_subplots(rows=n_rows, cols=n_cols, row_heights=[0.5]*n_rows, column_widths=[0.5]*n_cols, horizontal_spacing=.125)
+    for n, observable_key in enumerate(measured_observables):
+        if observable_key == "Rs":
+            unit = "mmHg min/mL"
+        elif observable_key in data.keys() and "unit" in data[observable_key].keys():
+            unit = data[observable_key]["unit"]
+        else:
+            unit = "a.u."
+        row, col = get_row_col(n+1, n_cols=n_cols)
+        fig.add_trace(go.Scatter(name = observable_key+" (sim)", x=sim_res["Time"], y=sim_res[observable_key], line_color="#1f77b4", showlegend=False, mode='lines', marker={"line": {"width":0}}), row=row, col=col)
+        fig.update_xaxes(title_text="Time (hour)", row=row, col=col)
+        fig.update_yaxes(title_text=f"{observable_key} ({unit})", row=row, col=col)
+    
+    fig.update_layout(margin=dict(l=0, r=0, t=0, b=0), height=250*n_rows)
+
+    return fig
 
 # Setup the models
 
@@ -115,6 +147,11 @@ You can switch between the two datasets using the data selector below.
 """)
      
 data_selected = st.selectbox("**Data selection:**", ["Janum", "Copeland"], 0)
+
+with open(f'data/data_fever.json','r') as f:
+    all_data = json.load(f)
+data = all_data[data_selected]
+
 model, model_features = setup_model('fever', param_keywords = data_selected)
 
 st.markdown("""
@@ -128,20 +165,61 @@ The data consist of both dose-responses and time-series data.
 show_plots = st.checkbox('Show agreements', True)
 
 if show_plots:
-
-    with open(f'data/data_fever.json','r') as f:
-        all_data = json.load(f)
-    data = all_data[data_selected]
     
     sims, sim_steady_state = get_all_sim_objects(model, all_data)
-    figs = plot_agreement(sims[data_selected], data)
+    fig_with_subplots = plot_agreement(sims[data_selected], data)
 
-    for title, fig in figs.items():
-        # st.markdown(f"#### {title}")
-        st.plotly_chart(fig)
+    st.plotly_chart(fig_with_subplots)
 
-bibliography(["dobreva_2021"])
+st.markdown("""## Simulating theraputic interventions
 
+The authors simulated a set of different interventions: 
+  1) transient or sustained endotoxaemia where the LPS dose was not removed over time, 
+  2) LPS adsorption, 
+  3) the use of antipyretics, 
+  4) the use of vasopressors. 
+
+The LPS adsorption treatment was started at t=4. The antipyretics administeration was simulated to have an effect between t=4 to t=7, and then again between t=10 to t=13. 
+Note that all of the treatments in the original work were assumed to be under a sustained endotoxaemia situtaion. 
+**Select interventions**
+""")
+
+transient_LPS = st.checkbox("Transient endotoxaemia")
+LPS_adsorption = st.checkbox("LPS adsorption")
+antipyretic = st.checkbox("Use of antipyretics")
+vasopressor = st.checkbox("Use of vasopressors")
+
+
+stim = { "LPS": { "t": [-np.inf, 0], "f": [0, 2] },
+        }
+
+if not transient_LPS:
+    stim["sustained_LPS"] = { "t": [-np.inf, 0], "f": [0, 1] }
+
+if LPS_adsorption:
+    stim["sustained_LPS"] = { "t": [-np.inf, 0, 4], "f": [0, 1, 0] }
+    stim["LPS_adsorption"] = { "t": [-np.inf, 4], "f": [0, 1] }
+
+if antipyretic:
+    stim["antipyretic"]= { "t": [-np.inf, 4, 7, 10, 13], "f": [0, 1, 0, 1, 0] }
+
+if vasopressor:
+    stim["vasopressor"]= { "t": [-np.inf, 4], "f": [0, 1] }
+
+with open("parameter sets/fever_treatment.json", 'r') as f:
+    params = json.load(f)
+
+model.parametervalues = params["x"]
+model.statevalues = params["ic"]
+
+sim = get_sim_object(model, stim)
+
+sim_res = simulate(sim, time=np.linspace(-0.001, 12,1000))
+fig_intervention = plot_intervention(sim_res, data)
+st.plotly_chart(fig_intervention)
+
+
+bibliography(["dobreva_2021"]) 
 
 
 ####### only for debugging purposes ########
