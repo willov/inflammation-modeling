@@ -119,8 +119,8 @@ def plot_intervention(sim_res, data):
 
 # Start the app
 st.title("Systemic effects of LPS")
-st.markdown("""This example is based on a publication by Dobreva et al. from 2021, in which the authors modeled the effect of endotoxin challenges (LPS) on systemic inflammation, pain perception, fever and heart rate.
-The original model was implemented as a delay-differential equation, but this page uses a simplified version of the model using ordinary differential equations, where the lags have been reduced to constants. 
+st.markdown(f"""This example is based on a publication by [Dobreva et al. from 2021]{ref["dobreva_2021"].split(']')[1]}, in which the authors modeled the effect of endotoxin challenges (LPS) on systemic inflammation, pain perception, fever and heart rate.
+The original model was implemented as a delay-differential equation, but this page uses a simplified version of the model using ordinary differential equations, where the lags have been reduced to constants. The lag in the original model was a delay in the time from changes in TNF and IL10 to the effect on nitric oxide. Thus, simulations of things downstream of nitric oxide such sa heart rate (HR) or blood pressure might be less reliable. 
 """)
 
 with st.expander("Abstract from the Dobreva et al. paper", expanded=True):
@@ -128,7 +128,7 @@ with st.expander("Abstract from the Dobreva et al. paper", expanded=True):
 )
 
 st.markdown("""## The model
-The model describes systemic effects of LPS stimulation. The model is illustrated in the figures below, firstly as an overview (Figure 2 from [Dobreva et al.](https://doi.org/10.1113/JP280883)) and then with more details of the immune response module ([Figure 3 from Dobreva etal.](https://doi.org/10.1113/JP280883))
+The model describes systemic effects of LPS stimulation. The model is illustrated in the figures below, firstly as an overview ([Figure 2 from Dobreva et al.](https://doi.org/10.1113/JP280883)) and then with more details of the immune response module ([Figure 3 from Dobreva etal.](https://doi.org/10.1113/JP280883))
 """)
      
 st.image('./assets/dobreva-system.png')
@@ -178,8 +178,9 @@ The authors simulated a set of different interventions:
   3) the use of antipyretics, 
   4) the use of vasopressors. 
 
-The LPS adsorption treatment was started at t=4. The antipyretics administeration was simulated to have an effect between t=4 to t=7, and then again between t=10 to t=13. 
+The LPS adsorption treatment was started at t = 4. The antipyretics administeration was simulated to have an effect between t = 4 to t = 7, and then again between t = 10 to t = 13. 
 Note that all of the treatments in the original work were assumed to be under a sustained endotoxaemia situtaion. 
+
 **Select interventions**
 """)
 
