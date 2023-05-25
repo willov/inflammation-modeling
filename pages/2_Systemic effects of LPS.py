@@ -73,7 +73,6 @@ def to_rgb(color):
     return f"rgb{tuple(color)}"
 
 def plot_agreement(sim, data):
-    figs = dict()
     times,_,_ = get_times(data)
     sim_res = simulate(sim, np.linspace(times[0],times[-1],10000))
     measured_observables = [key for key in data.keys() if key not in ["input", "meta"]]
