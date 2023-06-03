@@ -113,10 +113,13 @@ def plot_agreement(sims, data):
             figs[0].add_trace(go.Scatter(name = observable_key, x=observable["dose"], y=observable["mean"], error_y={"type": "data", "array":observable["SEM"]}, showlegend=False,  mode='markers', marker={"line": {"width":0}, "color":to_rgb(observable["color"])}))
             figs[0].add_trace(go.Scatter(name = observable_key+"_sim", x=sim_dr[stimuli][observable_key]["dose"],y=sim_dr[stimuli][observable_key][observable_key], showlegend=False, mode='lines', marker={"line": {"width":0}, "color":to_rgb(sim_dr[stimuli][observable_key]["color"])}))
             figs[0].update_xaxes(title_text=stimuli_name, type="log", minor=dict(ticks="inside", ticklen=6, showgrid=True))
-            figs[0].update_layout(yaxis_title=observable_name, margin=dict(l=0, r=0, t=0, b=0))
+            figs[0].update_layout(yaxis_title=observable_name,
+                                margin=dict(l=0, r=0, t=0, b=0))
 
     for fig in figs[1:]:
-        fig.update_layout(xaxis_title="Time (hour)", yaxis_title="TNF (pg/mg tissue)", margin=dict(l=0, r=0, t=0, b=0))
+        fig.update_layout(xaxis_title="Time (hour)", yaxis_title="TNF (pg/mg tissue)", 
+                        legend=dict(orientation="h", xanchor="center", y=-0.2, x=0.5),
+                        margin=dict(l=0, r=0, t=0, b=0))
 
     return list(zip(figs, titles))
 
