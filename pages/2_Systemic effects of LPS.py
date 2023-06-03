@@ -168,7 +168,7 @@ if show_plots:
     sims, sim_steady_state = get_all_sim_objects(model, all_data)
     fig_with_subplots = plot_agreement(sims[data_selected], data)
 
-    st.plotly_chart(fig_with_subplots)
+    st.plotly_chart(fig_with_subplots, use_container_width=True)
 
 st.markdown("""## Simulating theraputic interventions
 
@@ -216,7 +216,7 @@ sim = get_sim_object(model, stim)
 
 sim_res = simulate(sim, time=np.linspace(-0.001, 12,1000))
 fig_intervention = plot_intervention(sim_res, data)
-st.plotly_chart(fig_intervention)
+st.plotly_chart(fig_intervention, use_container_width=True)
 
 
 bibliography(["dobreva_2021"]) 
