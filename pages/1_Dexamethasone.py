@@ -172,12 +172,12 @@ if show_plots:
 
     for fig, title in figs[0:3]:
         st.markdown(f"#### {title}")
-        st.plotly_chart(fig)
+        st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("""### Recreating agreements from Figure 5""")
     fig, title = figs[3]
     st.markdown(f"#### {title}")
-    st.plotly_chart(fig)
+    st.plotly_chart(fig, use_container_width=True)
 
 
 
