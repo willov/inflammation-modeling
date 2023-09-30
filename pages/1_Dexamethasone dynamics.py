@@ -1,4 +1,3 @@
-import sund
 import pandas as pd
 import numpy as np
 import json
@@ -12,7 +11,16 @@ from collections import defaultdict
 import math
 import copy
 
+# Install sund in a custom location
+import os
+import subprocess
+import sys
+if "sund" not in os.listdir('./custom_package'):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--target=./custom_package", 'https://isbgroup.eu/edu/assets/sund-1.0.1.tar.gz#sha256=669a1d05c5c8b68500086e183d831650277012b3ea57e94356de1987b6e94e3e'])
 
+sys.path.append('./custom_package')
+
+import sund
 
 # Define functions needed
 

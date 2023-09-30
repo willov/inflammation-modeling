@@ -1,5 +1,15 @@
 import streamlit as st
 from references import references, bibliography
+
+# Install sund in a custom location
+import os
+import subprocess
+import sys
+if "sund" not in os.listdir('./custom_package'):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "--target=./custom_package", 'https://isbgroup.eu/edu/assets/sund-1.0.1.tar.gz#sha256=669a1d05c5c8b68500086e183d831650277012b3ea57e94356de1987b6e94e3e'])
+
+sys.path.append('./custom_package')
+
 st.title('Inflammation modelling examples')
 st.markdown("""
 This page contains a set of examples of how mathematical models can be used in an educational setting. To access the examples, select a page from the left sidebar. 

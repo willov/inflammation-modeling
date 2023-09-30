@@ -7,3 +7,4 @@
 *.asv
 Pipfile
 __pycache__
+custom_package/
